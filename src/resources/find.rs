@@ -46,8 +46,8 @@ impl fmt::Display for FindError {
 }
 impl error::Error for FindError {
 	fn description(&self) -> &str {
-		match *self {
-			FindError::Pe(ref e) => e.description(),
+		match self {
+			FindError::Pe(err) => err.description(),
 			FindError::Bad8Path => "invalid utf8 path",
 			FindError::NotFound => "entry not found",
 			FindError::NoRootPath => "missing '/' root",
@@ -56,8 +56,8 @@ impl error::Error for FindError {
 		}
 	}
 	fn cause(&self) -> Option<&error::Error> {
-		match *self {
-			FindError::Pe(ref e) => Some(e),
+		match self {
+			FindError::Pe(err) => Some(err),
 			_ => None,
 		}
 	}
@@ -70,9 +70,11 @@ impl<'a> Resources<'a> {
 	pub fn find_resource<'n>(&self, ty: impl Into<Name<'n>>, name: impl Into<Name<'n>>, lang: impl Into<Name<'n>>) -> Result<&'a [u8], FindError> {
 		self.find_resource_internal(ty.into(), name.into(), lang.into())
 	}
-	/// Gets the Version Information.
-	pub fn version_info(&self) -> Result<super::version_info::VersionInfo<'a>, FindError> {
-		self.find_resource(crate::image::RT_VERSION, 1, 1033)
+	/// Gets the Version Information for a particular language.
+	///
+	/// The default language is `1033`.
+	pub fn version_info(&self, lang: u16) -> Result<super::version_info::VersionInfo<'a>, FindError> {
+		self.find_resource(crate::image::RT_VERSION, 1, lang)
 			.and_then(|bytes| super::version_info::VersionInfo::try_from(bytes).map_err(FindError::Pe))
 	}
 	/// Gets the Application Manifest.
